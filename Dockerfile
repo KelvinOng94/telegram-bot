@@ -7,17 +7,16 @@ ENV PYTHONUNBUFFERED=1
 # Create working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy bot files
+# Copy the rest of the bot files
 COPY telegram_bot_mcode.py /app/
-COPY google-credentials.json /app/
-
-# Add entrypoint script
 COPY entrypoint.sh /app/
+
+# Give execute permission to entrypoint script
 RUN chmod +x /app/entrypoint.sh
 
-# Start the bot
+# Run entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
