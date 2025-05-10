@@ -1,36 +1,39 @@
 
+# telegram_bot_mcode.py
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, ConversationHandler
+from telegram.ext import (
+    ApplicationBuilder, CommandHandler, MessageHandler,
+    filters, CallbackQueryHandler, ContextTypes, ConversationHandler
+)
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import requests
 import os
 import json
 from datetime import datetime
 
-# Google Sheets setup using ENV variable
+# Google Sheets setup from env var JSON
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
 creds_dict = json.loads(creds_json)
-with open("/tmp/creds.json", "w") as f:
-    json.dump(creds_dict, f)
-creds = ServiceAccountCredentials.from_json_keyfile_name("/tmp/creds.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 sheet_client = gspread.authorize(creds)
 sheet = sheet_client.open("Video MCode Tracker").sheet1
 
-# Frame.io API setup from ENV
+# Frame.io API setup
 FRAMEIO_TOKEN = os.getenv("FRAMEIO_TOKEN")
-FRAMEIO_PROJECT_ID = "your_frameio_project_id_here"  # Replace as needed
+FRAMEIO_PROJECT_ID = os.getenv("FRAMEIO_PROJECT_ID")
 
 # Staff database with company
 staff_db = {
-    'G003': ('ARIF', 'GGG'), 'G004': ('ALYZZA', 'GGG'), 'G009': ('AZIM', 'GGG'), 'G011': ('AINA', 'GGG'), 'G012': ('SAFIRA', 'GGG'),
-    'G014': ('BATRISYA', 'GGG'), 'G017': ('KELVIN', 'GGG'), 'G018': ('HAIDA', 'GGG'),
-    'TCO2008': ('HAIKAL', 'TCO'), 'TCO2013': ('MIZAN', 'TCO'), 'TCO2014': ('ARINA', 'TCO'), 'TCO2015': ('JOE', 'TCO'), 'TCO2034': ('AISYAH', 'TCO'),
-    'GGD001': ('JAYDEN', 'GGD'), 'GGD002': ('ANGAH', 'GGD'), 'GGD003': ('ALVIN', 'GGD'), 'GGD004': ('RAI', 'GGD'), 'GGD005': ('ATIKA (ADMIN)', 'GGD'), 'GGD006': ('SHUHADA', 'GGD'),
-    'KS001': ('SHAZ', 'KSSB'), 'KS002': ('AFRIENA (ADMIN)', 'KSSB'), 'KS003': ('ANIS (ADMIN)', 'KSSB'), 'KS004': ('FARHANA', 'KSSB'),
-    'KS005': ('SHAZWA - RESIGN', 'KSSB'), 'WJ001': ('SHAO EN', 'WJ')
+    'G003': ('ARIF', 'GGG'), 'G004': ('ALYZZA', 'GGG'), 'G009': ('AZIM', 'GGG'), 'G011': ('AINA', 'GGG'),
+    'G012': ('SAFIRA', 'GGG'), 'G014': ('BATRISYA', 'GGG'), 'G017': ('KELVIN', 'GGG'), 'G018': ('HAIDA', 'GGG'),
+    'TCO2008': ('HAIKAL', 'TCO'), 'TCO2013': ('MIZAN', 'TCO'), 'TCO2014': ('ARINA', 'TCO'), 'TCO2015': ('JOE', 'TCO'),
+    'TCO2034': ('AISYAH', 'TCO'), 'GGD001': ('JAYDEN', 'GGD'), 'GGD002': ('ANGAH', 'GGD'), 'GGD003': ('ALVIN', 'GGD'),
+    'GGD004': ('RAI', 'GGD'), 'GGD005': ('ATIKA (ADMIN)', 'GGD'), 'GGD006': ('SHUHADA', 'GGD'),
+    'KS001': ('SHAZ', 'KSSB'), 'KS002': ('AFRIENA (ADMIN)', 'KSSB'), 'KS003': ('ANIS (ADMIN)', 'KSSB'),
+    'KS004': ('FARHANA', 'KSSB'), 'KS005': ('SHAZWA - RESIGN', 'KSSB'), 'WJ001': ('SHAO EN', 'WJ')
 }
 
 # Session states
@@ -49,7 +52,6 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_staff_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     staff_id = update.message.text.strip().upper()
     context.user_data['staff_id'] = staff_id
-
     staff_info = staff_db.get(staff_id)
     if staff_info:
         name, company = staff_info
@@ -83,7 +85,7 @@ async def confirm_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         day_str = now.strftime('%A')
         time_str = now.strftime('%H:%M:%S')
 
-        # Generate new M code
+        # Generate M code
         records = sheet.get_all_records()
         latest_mcode = {}
         for row in records:
@@ -112,7 +114,6 @@ async def confirm_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return STAFF_ID
 
 if __name__ == '__main__':
-    from telegram.ext import CallbackContext
     TOKEN = os.getenv("TELEGRAM_TOKEN")
     app = ApplicationBuilder().token(TOKEN).build()
 
