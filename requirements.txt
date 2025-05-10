@@ -1,2 +1,5 @@
 python-telegram-bot==20.3
-google-api-python-client
+gspread==5.12.0
+oauth2client==4.1.3
+pandas==2.2.2
+requests==2.31.0
