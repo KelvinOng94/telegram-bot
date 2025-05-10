@@ -1,4 +1,3 @@
-# telegram_bot_mcode.py
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, ConversationHandler
@@ -7,17 +6,22 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import requests
 import os
+import json
 from datetime import datetime
 
-# Google Sheets setup
+# Google Sheets setup using ENV variable
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("google-credentials.json", scope)
+creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+creds_dict = json.loads(creds_json)
+with open("/tmp/creds.json", "w") as f:
+    json.dump(creds_dict, f)
+creds = ServiceAccountCredentials.from_json_keyfile_name("/tmp/creds.json", scope)
 sheet_client = gspread.authorize(creds)
 sheet = sheet_client.open("Video MCode Tracker").sheet1
 
-# Frame.io API setup
-FRAMEIO_TOKEN = "fio-u-HgCUQ5v0rX74nvwnAVhQZjpsJ6IQ6U-NOIl4zVFDo7xBUNK2QwQyuTbgShzuf3Lq"
-FRAMEIO_PROJECT_ID = "your_frameio_project_id_here"  # Replace with your actual project ID
+# Frame.io API setup from ENV
+FRAMEIO_TOKEN = os.getenv("FRAMEIO_TOKEN")
+FRAMEIO_PROJECT_ID = "your_frameio_project_id_here"  # Replace as needed
 
 # Staff database with company
 staff_db = {
@@ -38,7 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['video'] = update.message.video
-    context.user_data['timestamp'] = update.message.date  # Save the timestamp
+    context.user_data['timestamp'] = update.message.date
     await update.message.reply_text("Thank you. Please enter your Staff ID (e.g. G017).")
     return STAFF_ID
 
@@ -109,7 +113,7 @@ async def confirm_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     from telegram.ext import CallbackContext
-    TOKEN = "7973737753:AAEstxuN_TooxRHRgG0EET3j-o0Apco27EM"
+    TOKEN = os.getenv("TELEGRAM_TOKEN")
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
